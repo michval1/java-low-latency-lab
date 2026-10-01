@@ -1,0 +1,28 @@
+JMH: 1.37
+JDK: OpenJDK 21.0.12.1+1-LTS
+JVM options: none
+Blackhole mode: compiler (auto-detected)
+Warmup: 3 iterations, 10 seconds each
+Measurement: 5 iterations, 10 seconds each
+Forks: 1 per benchmark
+Threads: 1
+Mode: Average time
+Units: ns/op
+
+boxedPath measurement iterations (ns/op):
+0.669, 0.693, 0.687, 0.708, 0.672
+Mean: 0.686
+99.9% confidence interval: [0.625, 0.747]
+
+primitivePath measurement iterations (ns/op):
+0.379, 0.380, 0.379, 0.381, 0.388
+Mean: 0.381
+99.9% confidence interval: [0.367, 0.396]
+
+Benchmark                                Mode  Cnt  Score   Error  Units
+PrimitiveVsBoxedBenchmark.boxedPath      avgt    5  0.686 ± 0.061  ns/op
+PrimitiveVsBoxedBenchmark.primitivePath  avgt    5  0.381 ± 0.014  ns/op
+
+Total run time: 00:02:40
+
+Limitations: fixed input 123; boxed result 124 is in Long cache range; one fork; no allocation profiling. This is a starter baseline, not a general long-versus-Long performance conclusion.
