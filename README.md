@@ -36,7 +36,7 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 
 | Experiment                       | Implementation     | Benchmark | Analysis  |
 | -------------------------------- | ------------------ | --------- | --------- |
-| Primitive `long` vs boxed `Long` | 🟡 Initial version | ⬜ Pending | ⬜ Pending |
+| Primitive `long` vs boxed `Long` | 🟡 Initial version | 🟡 Baseline recorded | 🟡 Initial limitations documented |
 | Array vs `ArrayList`             | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Array vs `HashMap` lookup        | 🟡 Initial version | ⬜ Pending | ⬜ Pending |
 | Allocation vs object reuse       | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
@@ -134,9 +134,9 @@ The environment used for final measurements will be recorded here.
 ```text
 CPU:        TBD
 RAM:        TBD
-OS:         TBD
-JDK:        Java 21
-JVM:        TBD
+OS:         Windows (exact version TBD)
+JDK:        Microsoft OpenJDK 21.0.12.1+1-LTS
+JVM:        OpenJDK 64-Bit Server VM
 JMH:        1.37
 Maven:      TBD
 ```
@@ -185,7 +185,18 @@ The experiment will investigate:
 
 ### Results
 
-*Not measured yet.*
+Initial baseline measured on 2026-10-01:
+
+| Benchmark | Mean (ns/op) | Error (ns/op, 99.9% CI half-width) |
+| --- | ---: | ---: |
+| primitivePath | 0.381 | 0.014 |
+| boxedPath | 0.686 | 0.061 |
+
+Configuration: one thread, one JVM fork per benchmark, three 10-second warmup iterations and five 10-second measurement iterations. No JVM options were supplied; JMH selected compiler blackholes automatically.
+
+The boxed path took approximately 1.8 times as long in this run. Both starter methods add one to a fixed value of 123. The boxed result, 124, is within the Long cache range, so the test does not demonstrate allocation of a new wrapper on each call. No allocation profiling was performed. The tiny workload may be strongly optimized by the JIT; these results are not a general long-versus-Long performance ratio.
+
+Recorded measurements are in `results/primitive-vs-boxed-baseline.txt`; setup details and limitations are in [PROJECT_NOTES.md](PROJECT_NOTES.md).
 
 ---
 
@@ -423,7 +434,7 @@ Example structure:
 
 ```text
 message_id,order_id,price_ticks,quantity,side
-1,10001,185025,100,BUY
+1,10001,10000,10,BUY
 ...
 ```
 
@@ -458,17 +469,9 @@ java-low-latency-lab/
     │                   ├── BenchmarkData.java
     │                   ├── PrimitiveVsBoxedBenchmark.java
     │                   └── LookupBenchmark.java
-    │
-    └── test/
-        └── java/
 ```
 
-As the project develops, benchmark documentation and raw results will be added:
-
-```text
-experiments/
-results/
-```
+Recorded measurements are already stored in `results/`. An `experiments/` directory is planned for individual experiment write-ups.
 
 ---
 
@@ -476,18 +479,9 @@ results/
 
 ## Requirements
 
-The intended environment is:
-
-- Java 21+
-- Maven
-- JMH 1.37
-
-Check the installed versions:
-
-```bash
-java -version
-mvn -version
-```
+- JDK 21 (the version used for the initial baseline).
+- Maven 3, or the Maven bundled with IntelliJ IDEA.
+- JMH 1.37 is declared in `pom.xml` and resolved by Maven.
 
 Clone the repository:
 
@@ -496,50 +490,61 @@ git clone https://github.com/michval1/java-low-latency-lab.git
 cd java-low-latency-lab
 ```
 
-Build:
+Build from the repository root:
 
 ```bash
 mvn clean package
 ```
 
-> The final benchmark execution workflow is still being verified and will be updated as part of the initial project setup.
+In IntelliJ IDEA, select the project JDK for Maven and execute `clean package` through the Maven tool window. A separate system Maven installation is not required for this workflow.
+
+Maven Shade produces `target/benchmarks.jar` with dependencies and `org.openjdk.jmh.Main` as its entry point. A custom application Main class is not required.
 
 ---
 
 # Running Benchmarks
 
-The final project will provide a reproducible command for running the complete benchmark suite as well as individual experiments.
-
-For example:
+Run all implemented benchmarks:
 
 ```bash
-mvn clean package
+java -jar target/benchmarks.jar
 ```
 
-followed by the configured JMH runner.
+Run one benchmark class:
 
-Exact commands will be documented once the standalone benchmark execution setup has been verified.
+```bash
+java -jar target/benchmarks.jar PrimitiveVsBoxedBenchmark
+```
+
+If Java is not on PATH, invoke the JDK executable directly. In PowerShell:
+
+```powershell
+& "<JDK_HOME>\bin\java.exe" -jar ".\target\benchmarks.jar" PrimitiveVsBoxedBenchmark
+```
+
+Replace `<JDK_HOME>` with your JDK installation directory. Commands are run from the repository root. The current primitive/boxed configuration takes about three minutes; actual duration depends on the machine.
+
+For future runs, save structured JMH results:
+
+```bash
+java -jar target/benchmarks.jar PrimitiveVsBoxedBenchmark -rf json -rff results/primitive-vs-boxed.json
+```
+
+Ensure the `results/` directory exists first. Inspect console output before committing logs and replace any personal absolute paths with placeholders.
+
+The earlier Maven `exec:java` invocation failed to locate `org.openjdk.jmh.runner.ForkedMain` in the forked JVM. Use the standalone JAR workflow above. A Maven `BUILD SUCCESS` message alone does not establish that measurement succeeded: verify completed measurement iterations and a populated result table.
 
 ---
 
 # Results
 
-No benchmark numbers are currently presented as final results.
+The first primitive/boxed baseline has been recorded. It verifies that the JMH runner works and documents the starter implementation; it is not a completed performance study.
 
-This is intentional.
+Measurement excerpts are stored in `results/primitive-vs-boxed-baseline.txt`. The initial environment is partially documented; CPU, RAM, exact OS version and Maven version still need to be recorded. Multiple forks, broader inputs and allocation profiling remain planned.
 
-Performance numbers will only be added after:
-
-1. the benchmark implementation has been reviewed,
-2. equivalent work between implementations has been verified,
-3. JVM warmup and forks have been configured,
-4. the execution environment has been documented,
-5. the benchmark has been reproduced across multiple runs.
-
-Raw JMH results will be stored in the repository where practical.
+Completed experiments should include reviewed implementations, equivalent work, documented configuration and environment, reproducible measurements, and an explanation of limitations.
 
 ---
-
 # Experiment Documentation
 
 Each completed experiment should document:
@@ -657,7 +662,7 @@ The broader goal is to understand the trade-offs involved in designing **predict
 
 This section will be updated as experiments are completed.
 
-No conclusions are currently presented because the benchmark suite has not yet been fully executed and validated.
+The standalone JAR successfully runs JMH with forked JVMs. The initial primitive/boxed baseline is recorded above, together with its limitations. No general performance conclusions or allocation findings have been established.
 
 ---
 
@@ -690,8 +695,8 @@ The purpose of these experiments is to understand specific trade-offs under docu
 
 # Roadmap
 
-- [ ] Verify Java 21 / Maven environment
-- [ ] Finalize reproducible JMH execution
+- [x] Verify Java 21 and IntelliJ Maven build
+- [x] Verify standalone JAR execution with JVM forks
 - [ ] Improve primitive vs boxed benchmark
 - [ ] Measure primitive vs boxed allocation
 - [ ] Implement array vs `ArrayList`
@@ -701,7 +706,8 @@ The purpose of these experiments is to understand specific trade-offs under docu
 - [ ] Implement text vs binary decoding
 - [ ] Implement and test SPSC ring buffer
 - [ ] Record benchmark environment
-- [ ] Store raw JMH results
+- [x] Store initial baseline measurement excerpts
+- [ ] Preserve structured results and sanitized full logs for future runs
 - [ ] Document findings for each experiment
 - [ ] Add correctness tests
 - [ ] Complete final benchmark comparison
@@ -712,4 +718,5 @@ The purpose of these experiments is to understand specific trade-offs under docu
 
 The repository currently provides the initial JMH benchmark structure, synthetic market data, experiment documentation templates, and the first benchmark implementations.
 
-The project is under active development. Benchmark results and conclusions will be added only after each experiment has been implemented and validated.
+The standalone benchmark runner has been verified and an initial primitive/boxed baseline is recorded. Benchmark implementation improvements, correctness tests, allocation profiling and the remaining experiments are still in progress or planned.
+
