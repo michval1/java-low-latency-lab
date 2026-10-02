@@ -90,3 +90,11 @@ No allocation profiler, JFR recording, or generated assembly inspection was perf
 ## 2026-10-01 — Array-sum results reviewed
 
 The user completed the full GC-profiled run. All six combinations contain three forks with five measurement iterations each. The Surefire report records three passing tests. Boxed/primitive time ratios were 1.03x, 1.19x and 2.08x as dataset size increased. No measured GC collections occurred; both paths had very small residual allocation. Interpretation and limitations are recorded in experiments/01-primitive-vs-boxed.md. The JSON JVM path was sanitized without changing numerical data. Hardware metadata and independent repeatability checks remain outstanding.
+
+## 2026-10-02 — Array versus ArrayList experiment prepared
+
+Implemented indexed summation over Long[] and ArrayList<Long> containing identical object references. This isolates the container comparison from primitive-versus-boxed representation. Allocation and list capacity preparation happen in setup. Added deterministic reference-sum correctness tests, including empty and single-element cases, and a pre-measurement hypothesis in experiments/02-array-vs-arraylist.md. Three dataset sizes and three forks match the preceding experiment. Build/tests have not yet been verified in this session; no benchmark results are claimed. Next: clean package in IntelliJ, full GC-profiled run, sanitize the JSON JVM path, then record interpretation.
+
+## 2026-10-02 — Array versus ArrayList results reviewed
+
+All eight existing tests passed, including five cases for the new experiment. The JSON contains six complete combinations (three forks, five measurement iterations each). ArrayList/array mean-time ratios are 1.60x, 1.45x and 1.17x. The largest dataset shows overlapping confidence intervals and needs repeatability checks. No measured GC collections occurred. The JSON personal JVM path was replaced with a placeholder without changing numerical values. Results and limitations are documented in Experiment 02. Hardware metadata remains outstanding.

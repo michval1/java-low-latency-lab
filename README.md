@@ -37,7 +37,7 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 | Experiment                       | Implementation     | Benchmark | Analysis  |
 | -------------------------------- | ------------------ | --------- | --------- |
 | Primitive `long` vs boxed `Long` | 🟢 Array sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; hardware metadata pending |
-| Array vs `ArrayList`             | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
+| Array vs `ArrayList` | 🟢 Indexed sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; repeatability pending |
 | Array vs `HashMap` lookup        | 🟡 Initial version | ⬜ Pending | ⬜ Pending |
 | Allocation vs object reuse       | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Heap vs direct `ByteBuffer`      | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
@@ -202,11 +202,11 @@ Recorded measurements are in `results/primitive-vs-boxed-baseline.txt`; setup de
 
 ## 2. Array vs `ArrayList`
 
-**Status:** ⬜ Planned
+**Status:** 🟡 Tested and measured; large-dataset repeatability pending
 
 ### Question
 
-How does direct array access compare with access through `ArrayList` when processing the same logical dataset?
+How does indexed traversal of `Long[]` compare with `ArrayList<Long>` holding the same objects? Both methods sum the same values; setup and boxing are outside measurement. See [Experiment 02](experiments/02-array-vs-arraylist.md) for the hypothesis, limitations and run command.
 
 ### Areas of Interest
 
@@ -220,7 +220,7 @@ The experiment will investigate:
 
 ### Results
 
-*Not measured yet.*
+Recorded in [Experiment 02](experiments/02-array-vs-arraylist.md). ArrayList/array mean-time ratios were 1.60x, 1.45x and 1.17x across the three sizes. The largest dataset has overlapping confidence intervals and needs independent repeatability checks.
 
 ---
 
@@ -699,7 +699,7 @@ The purpose of these experiments is to understand specific trade-offs under docu
 - [x] Verify standalone JAR execution with JVM forks
 - [x] Improve primitive vs boxed benchmark
 - [x] Measure primitive vs boxed allocation during array summation
-- [ ] Implement array vs `ArrayList`
+- [x] Implement, test and measure indexed array vs `ArrayList` traversal
 - [ ] Improve array vs `HashMap`
 - [ ] Implement allocation vs reuse
 - [ ] Implement heap vs direct `ByteBuffer`
