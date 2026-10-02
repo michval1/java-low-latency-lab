@@ -67,10 +67,26 @@ No allocation profiler, JFR recording, or generated assembly inspection was perf
 
 ### Next tasks
 
-1. Save the baseline result and commit the packaging change.
-2. Update README to use the working JAR invocation instead of `exec:java`.
+1. Completed: saved the baseline and added working JAR packaging.
+2. Completed: README documents the working JAR invocation.
 3. Record CPU, RAM, exact OS version, and Maven version for subsequent experiments.
-4. Expand PrimitiveVsBoxedBenchmark to compare equivalent work over long[] and Long[] with identical values, including values outside the Long cache range and several input sizes.
+4. Implemented: full-array sums over long[] and Long[] at three sizes; correctness tests passed and the full measurement was completed by the user.
 5. Record a hypothesis before the next run, define what one benchmark operation means, and collect results with multiple forks.
 6. Inspect allocations with the JMH GC profiler; distinguish storage costs from allocations during the measured operation.
 
+
+## 2026-10-01 — Expanded primitive/boxed experiment
+
+- Replaced fixed-value addition with summation over identical long[] and Long[] datasets.
+- Added sizes 1024, 65536 and 1000000, deterministic seed 42, and values outside the guaranteed Long cache range.
+- Setup creates arrays and wrappers before measurement; both methods return a primitive long sum.
+- One operation is one complete array traversal. Old baseline numbers describe the previous implementation and are not directly comparable.
+- Configured three forks, three 2-second warmup iterations and five 2-second measurement iterations.
+- Added correctness tests for matching sums and deterministic setup at all three sizes.
+- Recorded the hypothesis, method, run command and limitations in experiments/01-primitive-vs-boxed.md before new measurements.
+- Build verification in the Codex session was blocked by AccessDeniedException while accessing dependency JARs. This was a limitation of that verification attempt; the later user run and passing Surefire report are documented below.
+- Next: verify build/tests in IntelliJ, record machine details, run with -prof gc, and interpret full-array timings and measured allocation separately from setup memory.
+
+## 2026-10-01 — Array-sum results reviewed
+
+The user completed the full GC-profiled run. All six combinations contain three forks with five measurement iterations each. The Surefire report records three passing tests. Boxed/primitive time ratios were 1.03x, 1.19x and 2.08x as dataset size increased. No measured GC collections occurred; both paths had very small residual allocation. Interpretation and limitations are recorded in experiments/01-primitive-vs-boxed.md. The JSON JVM path was sanitized without changing numerical data. Hardware metadata and independent repeatability checks remain outstanding.

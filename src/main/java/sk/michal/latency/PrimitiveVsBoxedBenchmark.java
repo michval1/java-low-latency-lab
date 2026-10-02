@@ -3,32 +3,54 @@ package sk.michal.latency;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
+import java.util.SplittableRandom;
 
 /**
- * Starter benchmark comparing primitive and boxed arithmetic/storage.
- *
- * TODO:
- * Expand this benchmark so that it models a realistic hot-path operation.
- * Be careful not to benchmark dead code or constant-folded work.
+ * Sum identical values stored as primitives and boxed objects.
+ * One operation is a full-array sum, not a single element access.
+ * Arrays and wrappers are allocated during setup, outside measurement.
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Warmup(iterations = 3)
-@Measurement(iterations = 5)
-@Fork(1)
+@Warmup(iterations = 3, time = 2)
+@Measurement(iterations = 5, time = 2)
+@Fork(3)
 @State(Scope.Thread)
 public class PrimitiveVsBoxedBenchmark {
 
-    private long primitive = 123L;
-    private Long boxed = 123L;
+    @Param({"1024", "65536", "1000000"})
+    public int size;
 
-    @Benchmark
-    public long primitivePath() {
-        return primitive + 1L;
+    private long[] primitives;
+    private Long[] boxedValues;
+
+    @Setup(Level.Trial)
+    public void setup() {
+        primitives = new long[size];
+        boxedValues = new Long[size];
+        SplittableRandom random = new SplittableRandom(42);
+        for (int i = 0; i < size; i++) {
+            long value = random.nextLong(1000, 1000000);
+            primitives[i] = value;
+            boxedValues[i] = value;
+        }
     }
 
     @Benchmark
-    public Long boxedPath() {
-        return boxed + 1L;
+    public long primitivePath() {
+        long sum = 0;
+        for (long value : primitives) {
+            sum += value;
+        }
+        return sum;
+    }
+
+    @Benchmark
+    public long boxedPath() {
+        long sum = 0;
+        for (Long value : boxedValues) {
+            sum += value;
+        }
+        return sum;
     }
 }

@@ -36,7 +36,7 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 
 | Experiment                       | Implementation     | Benchmark | Analysis  |
 | -------------------------------- | ------------------ | --------- | --------- |
-| Primitive `long` vs boxed `Long` | 🟡 Initial version | 🟡 Baseline recorded | 🟡 Initial limitations documented |
+| Primitive `long` vs boxed `Long` | 🟢 Array sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; hardware metadata pending |
 | Array vs `ArrayList`             | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Array vs `HashMap` lookup        | 🟡 Initial version | ⬜ Pending | ⬜ Pending |
 | Allocation vs object reuse       | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
@@ -173,7 +173,7 @@ Java caches certain boxed `Long` values.
 
 Using only small values may therefore hide part of the cost that the experiment is attempting to measure.
 
-The final benchmark will include inputs outside the commonly cached range and varying input values.
+The updated implementation sums identical deterministic values stored in `long[]` and `Long[]` at three sizes, using inputs outside the guaranteed cache range. Arrays and wrappers are created in setup; one measured operation is a full-array sum. Three correctness tests passed and the full GC-profiled run completed at all three sizes. See [Experiment 01](experiments/01-primitive-vs-boxed.md) for the hypothesis, configuration and GC profiler command. The original baseline below measures different code and is not directly comparable.
 
 ### Metrics
 
@@ -185,7 +185,7 @@ The experiment will investigate:
 
 ### Results
 
-Initial baseline measured on 2026-10-01:
+Original fixed-value baseline measured on 2026-10-01 (before the array-sum implementation):
 
 | Benchmark | Mean (ns/op) | Error (ns/op, 99.9% CI half-width) |
 | --- | ---: | ---: |
@@ -522,7 +522,7 @@ If Java is not on PATH, invoke the JDK executable directly. In PowerShell:
 & "<JDK_HOME>\bin\java.exe" -jar ".\target\benchmarks.jar" PrimitiveVsBoxedBenchmark
 ```
 
-Replace `<JDK_HOME>` with your JDK installation directory. Commands are run from the repository root. The current primitive/boxed configuration takes about three minutes; actual duration depends on the machine.
+Replace `<JDK_HOME>` with your JDK installation directory. Commands are run from the repository root. The current primitive/boxed configuration takes about five minutes plus startup and profiling overhead; actual duration depends on the machine.
 
 For future runs, save structured JMH results:
 
@@ -538,9 +538,9 @@ The earlier Maven `exec:java` invocation failed to locate `org.openjdk.jmh.runne
 
 # Results
 
-The first primitive/boxed baseline has been recorded. It verifies that the JMH runner works and documents the starter implementation; it is not a completed performance study.
+Both the original fixed-value baseline and the expanded array-sum experiment have been recorded. The expanded run measured all three sizes with three forks and GC profiling. See [Experiment 01](experiments/01-primitive-vs-boxed.md) for results and limitations.
 
-Measurement excerpts are stored in `results/primitive-vs-boxed-baseline.txt`. The initial environment is partially documented; CPU, RAM, exact OS version and Maven version still need to be recorded. Multiple forks, broader inputs and allocation profiling remain planned.
+Measurement excerpts are stored in `results/primitive-vs-boxed-baseline.txt`. The initial environment is partially documented; CPU, RAM, exact OS version and Maven version still need to be recorded. The expanded results are stored in `results/primitive-vs-boxed-arrays.json`. Independent repeatability checks remain planned.
 
 Completed experiments should include reviewed implementations, equivalent work, documented configuration and environment, reproducible measurements, and an explanation of limitations.
 
@@ -697,8 +697,8 @@ The purpose of these experiments is to understand specific trade-offs under docu
 
 - [x] Verify Java 21 and IntelliJ Maven build
 - [x] Verify standalone JAR execution with JVM forks
-- [ ] Improve primitive vs boxed benchmark
-- [ ] Measure primitive vs boxed allocation
+- [x] Improve primitive vs boxed benchmark
+- [x] Measure primitive vs boxed allocation during array summation
 - [ ] Implement array vs `ArrayList`
 - [ ] Improve array vs `HashMap`
 - [ ] Implement allocation vs reuse
@@ -718,5 +718,4 @@ The purpose of these experiments is to understand specific trade-offs under docu
 
 The repository currently provides the initial JMH benchmark structure, synthetic market data, experiment documentation templates, and the first benchmark implementations.
 
-The standalone benchmark runner has been verified and an initial primitive/boxed baseline is recorded. Benchmark implementation improvements, correctness tests, allocation profiling and the remaining experiments are still in progress or planned.
-
+The standalone benchmark runner has been verified and an initial primitive/boxed baseline is recorded. The expanded primitive/boxed experiment has passing correctness tests and GC-profiled results. Hardware metadata and independent repeatability checks remain outstanding; the remaining experiments are planned.
