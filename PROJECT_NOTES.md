@@ -98,3 +98,11 @@ Implemented indexed summation over Long[] and ArrayList<Long> containing identic
 ## 2026-10-02 — Array versus ArrayList results reviewed
 
 All eight existing tests passed, including five cases for the new experiment. The JSON contains six complete combinations (three forks, five measurement iterations each). ArrayList/array mean-time ratios are 1.60x, 1.45x and 1.17x. The largest dataset shows overlapping confidence intervals and needs repeatability checks. No measured GC collections occurred. The JSON personal JVM path was replaced with a placeholder without changing numerical values. Results and limitations are documented in Experiment 02. Hardware metadata remains outstanding.
+
+## 2026-10-02 — Lookup experiment expanded
+
+Replaced the fixed key with a deterministic 1024-query batch, three dataset sizes, and sequential/random access patterns. Query keys are preboxed outside measurement. Both methods return the same lookup checksum. OperationsPerInvocation normalizes time and allocation to one lookup. Added eight correctness cases and documented the pre-measurement hypothesis, dense-key requirement, representation differences and repeated-query working-set limitation. Build/tests and measurement remain unverified; no new results are claimed. Full run: twelve combinations, approximately ten minutes plus overhead.
+
+## 2026-10-02 — Lookup results reviewed
+
+All 16 correctness tests passed. The result file contains all 12 combinations with three forks and five measurements per fork. The map has higher mean normalized lookup time in all combinations. Random access costs increased at larger sizes; sequential array queries repeatedly visit a local 1024-entry block. No GC collections were recorded and residual allocation is tiny. Results represent amortized batch lookup costs, not isolated or tail latency. Sanitized the JSON JVM path without changing numerical measurements. Updated Experiment 03 and README; hardware metadata and independent repeatability remain outstanding.

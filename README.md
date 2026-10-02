@@ -38,7 +38,7 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 | -------------------------------- | ------------------ | --------- | --------- |
 | Primitive `long` vs boxed `Long` | 🟢 Array sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; hardware metadata pending |
 | Array vs `ArrayList` | 🟢 Indexed sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; repeatability pending |
-| Array vs `HashMap` lookup        | 🟡 Initial version | ⬜ Pending | ⬜ Pending |
+| Array vs `HashMap` lookup | 🟢 Batched lookups tested | 🟢 Twelve combinations measured | 🟡 Initial analysis; metadata pending |
 | Allocation vs object reuse       | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Heap vs direct `ByteBuffer`      | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Text vs binary message decoding  | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
@@ -226,39 +226,25 @@ Recorded in [Experiment 02](experiments/02-array-vs-arraylist.md). ArrayList/arr
 
 ## 3. Array vs `HashMap` Lookup
 
-**Status:** 🟡 Initial implementation
+**Status:** 🟡 Tested and measured; hardware metadata and repeatability checks pending.
 
 ### Question
 
-How does direct indexed lookup compare with hash-based lookup?
+For dense integer keys, how does direct indexed lookup compare with successful hash-map lookup?
 
-### Current Implementation
+### Implementation
 
-The initial benchmark contains:
+The benchmark uses three dataset sizes and two access patterns (sequential/random). Setup prepares both representations and an identical stream of 1024 query keys. Map keys are preboxed outside measurement; map values are unboxed during lookup. Both methods return the sum of retrieved values.
 
-- an array,
-- a `HashMap`,
-- 1,024 values,
-- lookup operations for both structures.
+`@OperationsPerInvocation(1024)` normalizes results to one lookup, including loop and accumulation overhead. This differs from the full-traversal units used in Experiments 01 and 02.
 
-### Planned Improvements
-
-The final experiment will introduce:
-
-- multiple dataset sizes,
-- pre-generated lookup keys,
-- varying access patterns,
-- equivalent stored values,
-- clearer separation of lookup cost from benchmark setup.
-
-The benchmark must also account for boxing and unboxing performed by the `HashMap` implementation.
+See [Experiment 03](experiments/03-array-vs-hashmap.md) for the hypothesis, run command and limitations, including the repeated query stream and dense-key assumption.
 
 ### Results
 
-*Not measured yet.*
+All twelve combinations are recorded in [Experiment 03](experiments/03-array-vs-hashmap.md). The map had higher average normalized lookup time in this run. Results apply to repeated successful queries over dense integer keys, not arbitrary map workloads.
 
 ---
-
 ## 4. Allocation vs Object Reuse
 
 **Status:** ⬜ Planned
@@ -700,7 +686,7 @@ The purpose of these experiments is to understand specific trade-offs under docu
 - [x] Improve primitive vs boxed benchmark
 - [x] Measure primitive vs boxed allocation during array summation
 - [x] Implement, test and measure indexed array vs `ArrayList` traversal
-- [ ] Improve array vs `HashMap`
+- [x] Improve, test and measure array vs `HashMap` lookup
 - [ ] Implement allocation vs reuse
 - [ ] Implement heap vs direct `ByteBuffer`
 - [ ] Implement text vs binary decoding
