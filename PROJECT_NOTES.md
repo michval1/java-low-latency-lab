@@ -106,3 +106,11 @@ Replaced the fixed key with a deterministic 1024-query batch, three dataset size
 ## 2026-10-02 — Lookup results reviewed
 
 All 16 correctness tests passed. The result file contains all 12 combinations with three forks and five measurements per fork. The map has higher mean normalized lookup time in all combinations. Random access costs increased at larger sizes; sequential array queries repeatedly visit a local 1024-entry block. No GC collections were recorded and residual allocation is tiny. Results represent amortized batch lookup costs, not isolated or tail latency. Sanitized the JSON JVM path without changing numerical measurements. Updated Experiment 03 and README; hardware metadata and independent repeatability remain outstanding.
+
+## 2026-10-04 — Allocation versus reuse experiment prepared
+
+Added a single-message benchmark with deterministic inputs, two dataset sizes, fresh allocation versus reuse, equal field updates, cursor advancement, volatile publication and checksum work. Publication makes the message escape in both paths; its overhead is part of the measured operation. Mutable reuse is only modeled with thread-local ownership and no asynchronous consumer. Added tests for values, wrap-around and object identity. Documented the hypothesis before measurement. Build/tests and profiling remain unverified; no new results are claimed.
+
+## 2026-10-04 — Allocation versus reuse results reviewed
+
+All 19 tests passed. Four complete GC-profiled combinations contain three forks and five measurements each. Fresh allocation measured approximately 40 B/message, versus near-zero reuse allocation; allocate/reuse timing ratios were approximately 2.08x and 2.07x. Allocating paths reported GC collections, reuse paths zero. Documented measured publication overhead and ownership limitations in Experiment 04. Sanitized the JSON JVM path without changing numbers. Hardware metadata and independent repeatability remain outstanding.

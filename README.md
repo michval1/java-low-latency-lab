@@ -39,7 +39,7 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 | Primitive `long` vs boxed `Long` | 🟢 Array sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; hardware metadata pending |
 | Array vs `ArrayList` | 🟢 Indexed sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; repeatability pending |
 | Array vs `HashMap` lookup | 🟢 Batched lookups tested | 🟢 Twelve combinations measured | 🟡 Initial analysis; metadata pending |
-| Allocation vs object reuse       | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
+| Allocation vs object reuse | 🟢 Tested | 🟢 Four combinations measured | 🟡 Initial analysis; metadata pending |
 | Heap vs direct `ByteBuffer`      | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Text vs binary message decoding  | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 | Queue vs SPSC ring buffer        | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
@@ -247,7 +247,7 @@ All twelve combinations are recorded in [Experiment 03](experiments/03-array-vs-
 ---
 ## 4. Allocation vs Object Reuse
 
-**Status:** ⬜ Planned
+**Status:** 🟡 Tested and measured; hardware metadata and repeatability pending
 
 ### Question
 
@@ -276,11 +276,11 @@ and:
 Message -> reusable object -> process
 ```
 
-Both implementations must produce equivalent results.
+Both implementations must produce equivalent results. The implementation updates three message fields and returns a checksum. Both paths publish through a volatile field so objects escape; publication overhead is included in both timings. Reuse here is single-threaded and does not demonstrate safe asynchronous handoff. See [Experiment 04](experiments/04-allocation-vs-reuse.md) for the method and run command.
 
 ### Results
 
-*Not measured yet.*
+The fresh-object path allocated approximately 40 B/message and took about 2.1x as long as reuse in this run. Reuse had near-zero measured allocation and zero measured GC collections. Full results and limitations are in [Experiment 04](experiments/04-allocation-vs-reuse.md).
 
 ---
 
@@ -687,7 +687,7 @@ The purpose of these experiments is to understand specific trade-offs under docu
 - [x] Measure primitive vs boxed allocation during array summation
 - [x] Implement, test and measure indexed array vs `ArrayList` traversal
 - [x] Improve, test and measure array vs `HashMap` lookup
-- [ ] Implement allocation vs reuse
+- [x] Implement, test and measure allocation vs reuse
 - [ ] Implement heap vs direct `ByteBuffer`
 - [ ] Implement text vs binary decoding
 - [ ] Implement and test SPSC ring buffer
