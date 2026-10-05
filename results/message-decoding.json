@@ -5,7 +5,7 @@
         "mode" : "avgt",
         "threads" : 1,
         "forks" : 3,
-        "jvm" : "C:\\Users\\mette\\.jdks\\ms-21.0.12.1\\bin\\java.exe",
+        "jvm" : "<JDK_HOME>\\bin\\java.exe",
         "jvmArgs" : [
         ],
         "jdkVersion" : "21.0.12.1",
@@ -249,7 +249,7 @@
         "mode" : "avgt",
         "threads" : 1,
         "forks" : 3,
-        "jvm" : "C:\\Users\\mette\\.jdks\\ms-21.0.12.1\\bin\\java.exe",
+        "jvm" : "<JDK_HOME>\\bin\\java.exe",
         "jvmArgs" : [
         ],
         "jdkVersion" : "21.0.12.1",
@@ -493,7 +493,7 @@
         "mode" : "avgt",
         "threads" : 1,
         "forks" : 3,
-        "jvm" : "C:\\Users\\mette\\.jdks\\ms-21.0.12.1\\bin\\java.exe",
+        "jvm" : "<JDK_HOME>\\bin\\java.exe",
         "jvmArgs" : [
         ],
         "jdkVersion" : "21.0.12.1",
@@ -737,7 +737,7 @@
         "mode" : "avgt",
         "threads" : 1,
         "forks" : 3,
-        "jvm" : "C:\\Users\\mette\\.jdks\\ms-21.0.12.1\\bin\\java.exe",
+        "jvm" : "<JDK_HOME>\\bin\\java.exe",
         "jvmArgs" : [
         ],
         "jdkVersion" : "21.0.12.1",
