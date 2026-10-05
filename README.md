@@ -40,8 +40,8 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 | Array vs `ArrayList` | 🟢 Indexed sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; repeatability pending |
 | Array vs `HashMap` lookup | 🟢 Batched lookups tested | 🟢 Twelve combinations measured | 🟡 Initial analysis; metadata pending |
 | Allocation vs object reuse | 🟢 Tested | 🟢 Four combinations measured | 🟡 Initial analysis; metadata pending |
-| Heap vs direct `ByteBuffer`      | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
-| Text vs binary message decoding  | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
+| Heap vs direct `ByteBuffer` | 🟢 Tested | 🟢 Eight combinations measured | 🟡 Initial analysis; metadata pending |
+| Text vs binary message decoding | 🟡 Implemented | ⬜ Tests and measurements pending | 🟡 Hypothesis documented |
 | Queue vs SPSC ring buffer        | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
 
 Legend:
@@ -286,7 +286,7 @@ The fresh-object path allocated approximately 40 B/message and took about 2.1x a
 
 ## 5. Heap vs Direct `ByteBuffer`
 
-**Status:** ⬜ Planned
+**Status:** 🟡 Tested and measured; metadata and repeatability pending
 
 ### Question
 
@@ -296,7 +296,7 @@ How does a heap-backed `ByteBuffer` compare with a direct `ByteBuffer` for contr
 
 Buffer allocation must not accidentally become part of a benchmark intended to measure buffer access.
 
-Buffers will therefore be prepared before the measured operation unless allocation itself is explicitly being tested.
+Buffers are allocated and populated in setup. Four methods compare absolute long reads and writes using identical byte order and sizes. One operation traverses the whole buffer. Write methods include one final readback. See [Experiment 05](experiments/05-bytebuffer.md) for the hypothesis, configuration and limitations.
 
 ### Areas of Interest
 
@@ -307,13 +307,13 @@ Buffers will therefore be prepared before the measured operation unless allocati
 
 ### Results
 
-*Not measured yet.*
+Heap reads had approximately 3.6x lower time in this run. Write confidence intervals overlap at both sizes. See [Experiment 05](experiments/05-bytebuffer.md) for full results and limitations.
 
 ---
 
 ## 6. Text vs Binary Message Decoding
 
-**Status:** ⬜ Planned
+**Status:** 🟡 Implemented; build/tests and measurement pending.
 
 ### Question
 
@@ -328,7 +328,7 @@ quantity = 100
 side = BUY
 ```
 
-Both decoders must produce equivalent logical values.
+Both decoders return the same immutable Message record. Text uses String.split and Long.parseLong; binary uses fixed-offset BIG_ENDIAN reads from prepared 25-byte buffers. Encoding and input creation happen outside measurement. See [Experiment 06](experiments/06-message-decoding.md) for the format, hypothesis and run command.
 
 ### Text Representation
 
@@ -354,7 +354,7 @@ The experiment will investigate:
 
 ### Results
 
-*Not measured yet.*
+Heap reads took about 3.6x less time than direct reads in this run. Write confidence intervals overlap. See [Experiment 05](experiments/05-bytebuffer.md) for measurements and limitations.
 
 ---
 
@@ -688,7 +688,7 @@ The purpose of these experiments is to understand specific trade-offs under docu
 - [x] Implement, test and measure indexed array vs `ArrayList` traversal
 - [x] Improve, test and measure array vs `HashMap` lookup
 - [x] Implement, test and measure allocation vs reuse
-- [ ] Implement heap vs direct `ByteBuffer`
+- [x] Implement, test and measure heap vs direct `ByteBuffer`
 - [ ] Implement text vs binary decoding
 - [ ] Implement and test SPSC ring buffer
 - [ ] Record benchmark environment

@@ -114,3 +114,15 @@ Added a single-message benchmark with deterministic inputs, two dataset sizes, f
 ## 2026-10-04 — Allocation versus reuse results reviewed
 
 All 19 tests passed. Four complete GC-profiled combinations contain three forks and five measurements each. Fresh allocation measured approximately 40 B/message, versus near-zero reuse allocation; allocate/reuse timing ratios were approximately 2.08x and 2.07x. Allocating paths reported GC collections, reuse paths zero. Documented measured publication overhead and ownership limitations in Experiment 04. Sanitized the JSON JVM path without changing numbers. Hardware metadata and independent repeatability remain outstanding.
+
+## 2026-10-05 — ByteBuffer experiment prepared
+
+Added heap/direct absolute long reads and writes at two sizes, with identical BIG_ENDIAN byte order. Setup performs allocation and initial population; measured writes vary their base and include final-element readback. One operation traverses the whole buffer. Added correctness tests for initial data, write sequences and repeated setup. Documented the hypothesis and native-memory/I-O limitations before measurement. Build/tests and results remain unverified. Eight combinations take approximately six to seven minutes plus overhead.
+
+## 2026-10-05 — Buffer results reviewed and decoding prepared
+
+All 22 existing tests passed. Eight buffer combinations completed; heap reads had about 3.6x lower time, while write confidence intervals overlap. Sanitized JSON JVM path and documented results. Prepared text/binary codecs returning equivalent immutable records, fixed 25-byte binary layout, deterministic inputs and validation tests. String creation and binary encoding happen in setup; decoding is measured. New decoding build/tests and performance results remain unverified. Hardware metadata remains outstanding.
+
+## 2026-10-05 — ByteBuffer results reviewed
+
+All eight combinations completed; 22 existing tests passed. Heap read times were approximately 3.6x lower than direct reads. Write intervals overlap at both sizes, so no clear write advantage is claimed. GC counts were zero and measured residual allocation was low; setup allocation and retained native memory are excluded. Updated Experiment 05 and README and sanitized the JSON JVM path. Existing Experiment 06 codec/benchmark/tests were inspected; their build and measurement remain pending.
