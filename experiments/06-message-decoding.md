@@ -30,7 +30,7 @@ Replace the placeholder locally. Four combinations take approximately three to f
 
 ## Environment and results
 
-Pending: build/test verification and measured results. Record CPU, RAM, OS/JDK/JVM/Maven and flags.
+The recorded run contains four combinations with three forks each. Binary decoding means were 3.642 and 3.760 ns/message at sizes 1024 and 65536, versus 79.074 and 81.274 ns/message for text. Measured allocation was approximately 40 B/message for binary and 320 B/message for text. Thus this prepared-input binary decoder took about 21.6–21.7x less time and allocated one eighth as many bytes in this run. This compares fixed-offset decoding with the chosen split/parse implementation, not all text parsers. Numerical results are in results/message-decoding.json; the personal JVM path was sanitized. Hardware metadata and repeatability remain outstanding.
 
 ## Limitations
 

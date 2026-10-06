@@ -126,3 +126,11 @@ All 22 existing tests passed. Eight buffer combinations completed; heap reads ha
 ## 2026-10-05 — ByteBuffer results reviewed
 
 All eight combinations completed; 22 existing tests passed. Heap read times were approximately 3.6x lower than direct reads. Write intervals overlap at both sizes, so no clear write advantage is claimed. GC counts were zero and measured residual allocation was low; setup allocation and retained native memory are excluded. Updated Experiment 05 and README and sanitized the JSON JVM path. Existing Experiment 06 codec/benchmark/tests were inspected; their build and measurement remain pending.
+
+## 2026-10-06 — Decoding results reviewed and SPSC experiment prepared
+
+Recorded decoding results show approximately 21.6–21.7x lower binary decoding time and 40 versus 320 B/message for these prepared-input implementations. Sanitized the JSON JVM path. Added bounded SPSC FIFO with volatile publication, full/empty behavior and power-of-two indexing. Added FIFO/wrap-around and concurrent ordered-transfer tests. Group benchmark uses one producer and one consumer with successful/failed operation counters; primary throughput is attempts, not completed messages. Build/tests and queue measurements remain pending. Hardware metadata remains outstanding.
+
+## 2026-10-06 — Queue results and pre-commit path check
+
+All 37 tests passed; four complete queue combinations contain three forks with five measurement iterations. JMH EVENTS metrics are aggregate counts (#), so documentation now distinguishes them from ops/s. The ring recorded approximately 1.90x/1.65x as many successful polls under the same configured schedule. GC profiler differences are recorded without attributing their source. Sanitized all four personal JVM paths in queue JSON while preserving numerical data. Hardware metadata and independent repeatability remain outstanding.

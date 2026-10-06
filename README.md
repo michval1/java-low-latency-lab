@@ -41,8 +41,8 @@ The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benc
 | Array vs `HashMap` lookup | 🟢 Batched lookups tested | 🟢 Twelve combinations measured | 🟡 Initial analysis; metadata pending |
 | Allocation vs object reuse | 🟢 Tested | 🟢 Four combinations measured | 🟡 Initial analysis; metadata pending |
 | Heap vs direct `ByteBuffer` | 🟢 Tested | 🟢 Eight combinations measured | 🟡 Initial analysis; metadata pending |
-| Text vs binary message decoding | 🟡 Implemented | ⬜ Tests and measurements pending | 🟡 Hypothesis documented |
-| Queue vs SPSC ring buffer        | ⬜ Planned          | ⬜ Pending | ⬜ Pending |
+| Text vs binary message decoding | 🟢 Implemented | 🟢 Four combinations recorded | 🟡 Initial analysis; metadata pending |
+| Queue vs SPSC ring buffer | 🟢 Tested | 🟢 Four groups/capacities measured | 🟡 Initial analysis; metadata pending |
 
 Legend:
 
@@ -313,7 +313,7 @@ Heap reads had approximately 3.6x lower time in this run. Write confidence inter
 
 ## 6. Text vs Binary Message Decoding
 
-**Status:** 🟡 Implemented; build/tests and measurement pending.
+**Status:** 🟡 Measured; hardware metadata and repeatability pending.
 
 ### Question
 
@@ -360,7 +360,7 @@ Heap reads took about 3.6x less time than direct reads in this run. Write confid
 
 ## 7. Queue vs SPSC Ring Buffer
 
-**Status:** ⬜ Planned
+**Status:** 🟡 Tested and measured; hardware metadata and repeatability pending. See [Experiment 07](experiments/07-spsc-ring-buffer.md). Successful transfer counters are aggregate counts, while primary throughput counts attempts.
 
 ### Question
 
@@ -404,7 +404,7 @@ Correctness will be tested before performance measurements are collected.
 
 ### Results
 
-*Not measured yet.*
+Recorded in [Experiment 06](experiments/06-message-decoding.md): approximately 3.6–3.8 ns/message and 40 B/message for binary versus 79–81 ns/message and 320 B/message for the chosen text parser. Prepared inputs exclude encoding and I/O.
 
 ---
 
@@ -689,8 +689,8 @@ The purpose of these experiments is to understand specific trade-offs under docu
 - [x] Improve, test and measure array vs `HashMap` lookup
 - [x] Implement, test and measure allocation vs reuse
 - [x] Implement, test and measure heap vs direct `ByteBuffer`
-- [ ] Implement text vs binary decoding
-- [ ] Implement and test SPSC ring buffer
+- [x] Implement and measure text vs binary decoding
+- [x] Implement, test and measure SPSC ring buffer
 - [ ] Record benchmark environment
 - [x] Store initial baseline measurement excerpts
 - [ ] Preserve structured results and sanitized full logs for future runs
