@@ -16,7 +16,7 @@ The revised experiment prepares long[] and Long[] with identical deterministic v
 
 Both containers reference the same Long objects. Comparing long[] directly with ArrayList<Long> would combine primitive/boxed representation with container access. This experiment instead compares indexed access while holding the values constant.
 
-The largest case had overlapping confidence intervals. It needs an independent repeat run before treating the point estimate as a reliable difference.
+The largest case had overlapping confidence intervals. An independent repeat on 2026-10-23 gave 382.055 versus 456.582 microseconds/traversal (list/array 1.20x), with separated intervals. Both runs favor the array; absolute timings changed, so results remain run-specific.
 
 ## Lookup keys
 
@@ -56,7 +56,11 @@ Hardware details are in BENCHMARK_ENVIRONMENT.md. Exact OS/Maven versions, load,
 
 ## Next steps
 
-1. Repeat the largest array/ArrayList case using a separate result file.
+1. Extend repeatability checks beyond the completed independent repeat of the largest array/ArrayList case.
 2. Record precise environment metadata alongside new runs.
 3. Investigate selected differences with profiling.
 4. Extend SPSC concurrency validation before adding optimizations.
+
+## 2026-10-23: largest array/list repeat
+
+Reviewed both complete repeat results (three forks, five measured iterations each) against the original million-element cases. Recorded the same directional result, narrower separated intervals and changed absolute times in Experiment 02. Retained original results and sanitized only the new JSON JVM executable path. No code was changed and no new correctness-test run is claimed.

@@ -16,7 +16,7 @@ This lab is for practicing benchmark design and interpreting measurements. Each 
 | Text vs binary decoding | Decode the same four fields from text or a 25-byte buffer | [06](experiments/06-message-decoding.md) |
 | Queue vs SPSC ring buffer | One producer and one consumer using offer/poll | [07](experiments/07-spsc-ring-buffer.md) |
 
-All seven have initial results. The latest test reports contain 37 passing cases. Independent repeat runs are still needed, especially for the largest array/ArrayList case, where confidence intervals overlap.
+All seven have initial results. The latest test reports contain 37 passing cases. The largest array/ArrayList case has one independent repeat: ArrayList had higher mean time in both runs, with separated intervals in the repeat. Broader repeatability checks remain open.
 
 ## Build
 
@@ -96,7 +96,7 @@ The CSV fixture and BenchmarkData class provide small examples; performance expe
 
 ## Next work
 
-- Repeat the largest array/ArrayList case in a separate run and compare uncertainty.
+- Extend independent repeat runs to other experiments; one repeat of the largest array/ArrayList case is recorded in Experiment 02.
 - Record exact OS/Maven versions and machine conditions for future runs.
 - Profile selected results to investigate causes rather than attributing them to cache or JIT behavior from timing alone.
 - Extend queue validation with longer stress runs before considering production use.
