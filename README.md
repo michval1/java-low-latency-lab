@@ -1,707 +1,102 @@
 # Java Low-Latency Lab
 
-> 🚧 **Work in Progress**
->
-> This project is an ongoing exploration of low-latency Java techniques using the Java Microbenchmark Harness (JMH).
->
-> The benchmark suite is being implemented incrementally. Each experiment includes its methodology, benchmark results, observations, and analysis once completed.
+Seven JMH experiments covering Java data structures, allocation, buffer access, message decoding and single-producer/single-consumer queues.
 
-## Overview
+This lab is for practicing benchmark design and interpreting measurements. Each experiment has a question, correctness tests, recorded measurements and notes on what the measurements leave out.
 
-**Java Low-Latency Lab** is a collection of controlled microbenchmarks exploring performance characteristics relevant to low-latency Java applications.
+## Experiments
 
-The project focuses on topics such as:
+| Experiment | Implementation | Write-up |
+| --- | --- | --- |
+| Primitive vs boxed values | Sum identical data in long[] and Long[] | [01](experiments/01-primitive-vs-boxed.md) |
+| Array vs ArrayList | Indexed traversal using the same Long objects | [02](experiments/02-array-vs-arraylist.md) |
+| Array vs HashMap | Successful lookups with sequential and random keys | [03](experiments/03-array-vs-hashmap.md) |
+| Allocation vs reuse | Create or reuse a message, then publish and process it | [04](experiments/04-allocation-vs-reuse.md) |
+| Heap vs direct ByteBuffer | Read and write long values at absolute offsets | [05](experiments/05-bytebuffer.md) |
+| Text vs binary decoding | Decode the same four fields from text or a 25-byte buffer | [06](experiments/06-message-decoding.md) |
+| Queue vs SPSC ring buffer | One producer and one consumer using offer/poll | [07](experiments/07-spsc-ring-buffer.md) |
 
-- primitive vs boxed values,
-- memory allocation and object reuse,
-- arrays and Java collections,
-- memory access patterns,
-- heap vs direct memory,
-- message decoding,
-- queue implementations,
-- single-producer/single-consumer communication,
-- JVM and garbage-collection behaviour.
+All seven have initial results. The latest test reports contain 37 passing cases. Independent repeat runs are still needed, especially for the largest array/ArrayList case, where confidence intervals overlap.
 
-The goal is not simply to determine which implementation is "faster".
+## Build
 
-Instead, each experiment attempts to answer:
-
-> **Why does a particular implementation behave differently, and under which conditions does that difference matter?**
-
-The project uses **JMH (Java Microbenchmark Harness)** to reduce common JVM benchmarking problems such as insufficient warmup, dead-code elimination, constant folding, and incorrect timing methodology.
-
----
-
-## Project Status
-
-| Experiment                       | Implementation     | Benchmark | Analysis  |
-| -------------------------------- | ------------------ | --------- | --------- |
-| Primitive `long` vs boxed `Long` | 🟢 Array sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; hardware metadata pending |
-| Array vs `ArrayList` | 🟢 Indexed sums tested | 🟢 Three sizes measured | 🟡 Initial analysis; repeatability pending |
-| Array vs `HashMap` lookup | 🟢 Batched lookups tested | 🟢 Twelve combinations measured | 🟡 Initial analysis; metadata pending |
-| Allocation vs object reuse | 🟢 Tested | 🟢 Four combinations measured | 🟡 Initial analysis; metadata pending |
-| Heap vs direct `ByteBuffer` | 🟢 Tested | 🟢 Eight combinations measured | 🟡 Initial analysis; metadata pending |
-| Text vs binary message decoding | 🟢 Implemented | 🟢 Four combinations recorded | 🟡 Initial analysis; metadata pending |
-| Queue vs SPSC ring buffer | 🟢 Tested | 🟢 Four groups/capacities measured | 🟡 Initial analysis; metadata pending |
-
-Legend:
-
-- 🟢 Complete
-- 🟡 In progress / initial implementation
-- ⬜ Planned or pending
-
----
-
-## Motivation
-
-Low-latency systems often operate under requirements where small delays can become significant when repeated millions of times.
-
-This is especially relevant to systems such as:
-
-- trading infrastructure,
-- market-data processing,
-- real-time event processing,
-- messaging systems,
-- high-throughput backend services.
-
-In these environments, performance can be influenced by details that are less important in typical applications:
-
-- object allocation,
-- garbage collection,
-- boxing and unboxing,
-- memory layout,
-- cache locality,
-- data structures,
-- synchronization,
-- message representation.
-
-This repository is intended as a practical laboratory for investigating these effects instead of relying only on assumptions about performance.
-
----
-
-# Benchmark Methodology
-
-All performance experiments use **JMH**.
-
-Microbenchmarking JVM applications can be misleading because the JVM performs runtime optimizations such as:
-
-- Just-In-Time compilation,
-- method inlining,
-- constant folding,
-- dead-code elimination,
-- escape analysis.
-
-For this reason, benchmarks in this repository follow several rules.
-
-### Warmup
-
-Benchmarks include warmup iterations before measurements are collected.
-
-This allows frequently executed code to be optimized by the JVM before measurements begin.
-
-### Forks
-
-Benchmarks are executed in separate JVM forks where appropriate.
-
-This reduces the effect of previous benchmark executions on later measurements.
-
-### Benchmark State
-
-Input data is prepared outside the measured operation whenever possible.
-
-The benchmark should measure the operation under investigation rather than unrelated setup work.
-
-### Equivalent Work
-
-Two implementations being compared should perform equivalent logical work.
-
-A faster benchmark is meaningless if one implementation performs less work than the other.
-
-### Results
-
-Results will be stored together with information about the machine and JVM used to produce them.
-
-Raw benchmark output should be preserved where practical so results can be inspected independently.
-
----
-
-# Environment
-
-Benchmark results depend heavily on hardware and JVM configuration.
-
-The environment used for final measurements will be recorded here.
-
-```text
-CPU:        TBD
-RAM:        TBD
-OS:         Windows (exact version TBD)
-JDK:        Microsoft OpenJDK 21.0.12.1+1-LTS
-JVM:        OpenJDK 64-Bit Server VM
-JMH:        1.37
-Maven:      TBD
-```
-
-Additional JVM flags used for individual experiments will be documented alongside their results.
-
----
-
-# Experiments
-
-## 1. Primitive `long` vs Boxed `Long`
-
-**Status:** 🟡 Initial implementation
-
-### Question
-
-What performance and allocation differences appear when using primitive `long` values compared with boxed `Long` values?
-
-### Why It Matters
-
-Boxed values introduce additional JVM behaviour including:
-
-- boxing,
-- unboxing,
-- object representation,
-- possible allocation,
-- cached wrapper objects.
-
-These differences may become relevant in allocation-sensitive hot paths.
-
-### Important Benchmark Consideration
-
-Java caches certain boxed `Long` values.
-
-Using only small values may therefore hide part of the cost that the experiment is attempting to measure.
-
-The updated implementation sums identical deterministic values stored in `long[]` and `Long[]` at three sizes, using inputs outside the guaranteed cache range. Arrays and wrappers are created in setup; one measured operation is a full-array sum. Three correctness tests passed and the full GC-profiled run completed at all three sizes. See [Experiment 01](experiments/01-primitive-vs-boxed.md) for the hypothesis, configuration and GC profiler command. The original baseline below measures different code and is not directly comparable.
-
-### Metrics
-
-The experiment will investigate:
-
-- average operation time,
-- allocation rate,
-- garbage-collection behaviour.
-
-### Results
-
-Original fixed-value baseline measured on 2026-10-01 (before the array-sum implementation):
-
-| Benchmark | Mean (ns/op) | Error (ns/op, 99.9% CI half-width) |
-| --- | ---: | ---: |
-| primitivePath | 0.381 | 0.014 |
-| boxedPath | 0.686 | 0.061 |
-
-Configuration: one thread, one JVM fork per benchmark, three 10-second warmup iterations and five 10-second measurement iterations. No JVM options were supplied; JMH selected compiler blackholes automatically.
-
-The boxed path took approximately 1.8 times as long in this run. Both starter methods add one to a fixed value of 123. The boxed result, 124, is within the Long cache range, so the test does not demonstrate allocation of a new wrapper on each call. No allocation profiling was performed. The tiny workload may be strongly optimized by the JIT; these results are not a general long-versus-Long performance ratio.
-
-Recorded measurements are in `results/primitive-vs-boxed-baseline.txt`; setup details and limitations are in [PROJECT_NOTES.md](PROJECT_NOTES.md).
-
----
-
-## 2. Array vs `ArrayList`
-
-**Status:** 🟡 Tested and measured; large-dataset repeatability pending
-
-### Question
-
-How does indexed traversal of `Long[]` compare with `ArrayList<Long>` holding the same objects? Both methods sum the same values; setup and boxing are outside measurement. See [Experiment 02](experiments/02-array-vs-arraylist.md) for the hypothesis, limitations and run command.
-
-### Areas of Interest
-
-The experiment will investigate:
-
-- indexing overhead,
-- boxing where applicable,
-- memory layout,
-- iteration performance,
-- cache locality.
-
-### Results
-
-Recorded in [Experiment 02](experiments/02-array-vs-arraylist.md). ArrayList/array mean-time ratios were 1.60x, 1.45x and 1.17x across the three sizes. The largest dataset has overlapping confidence intervals and needs independent repeatability checks.
-
----
-
-## 3. Array vs `HashMap` Lookup
-
-**Status:** 🟡 Tested and measured; hardware metadata and repeatability checks pending.
-
-### Question
-
-For dense integer keys, how does direct indexed lookup compare with successful hash-map lookup?
-
-### Implementation
-
-The benchmark uses three dataset sizes and two access patterns (sequential/random). Setup prepares both representations and an identical stream of 1024 query keys. Map keys are preboxed outside measurement; map values are unboxed during lookup. Both methods return the sum of retrieved values.
-
-`@OperationsPerInvocation(1024)` normalizes results to one lookup, including loop and accumulation overhead. This differs from the full-traversal units used in Experiments 01 and 02.
-
-See [Experiment 03](experiments/03-array-vs-hashmap.md) for the hypothesis, run command and limitations, including the repeated query stream and dense-key assumption.
-
-### Results
-
-All twelve combinations are recorded in [Experiment 03](experiments/03-array-vs-hashmap.md). The map had higher average normalized lookup time in this run. Results apply to repeated successful queries over dense integer keys, not arbitrary map workloads.
-
----
-## 4. Allocation vs Object Reuse
-
-**Status:** 🟡 Tested and measured; hardware metadata and repeatability pending
-
-### Question
-
-What happens when a message-processing hot path creates new objects for every message compared with reusing existing objects?
-
-### Areas of Interest
-
-The experiment will investigate:
-
-- allocation rate,
-- throughput,
-- average latency,
-- garbage-collection activity.
-
-### Scenario
-
-Synthetic market messages will be processed using two approaches:
-
-```text
-Message -> new object -> process
-```
-
-and:
-
-```text
-Message -> reusable object -> process
-```
-
-Both implementations must produce equivalent results. The implementation updates three message fields and returns a checksum. Both paths publish through a volatile field so objects escape; publication overhead is included in both timings. Reuse here is single-threaded and does not demonstrate safe asynchronous handoff. See [Experiment 04](experiments/04-allocation-vs-reuse.md) for the method and run command.
-
-### Results
-
-The fresh-object path allocated approximately 40 B/message and took about 2.1x as long as reuse in this run. Reuse had near-zero measured allocation and zero measured GC collections. Full results and limitations are in [Experiment 04](experiments/04-allocation-vs-reuse.md).
-
----
-
-## 5. Heap vs Direct `ByteBuffer`
-
-**Status:** 🟡 Tested and measured; metadata and repeatability pending
-
-### Question
-
-How does a heap-backed `ByteBuffer` compare with a direct `ByteBuffer` for controlled read/write workloads?
-
-### Important Benchmark Consideration
-
-Buffer allocation must not accidentally become part of a benchmark intended to measure buffer access.
-
-Buffers are allocated and populated in setup. Four methods compare absolute long reads and writes using identical byte order and sizes. One operation traverses the whole buffer. Write methods include one final readback. See [Experiment 05](experiments/05-bytebuffer.md) for the hypothesis, configuration and limitations.
-
-### Areas of Interest
-
-- read performance,
-- write performance,
-- allocation behaviour,
-- JVM/native memory interaction.
-
-### Results
-
-Heap reads had approximately 3.6x lower time in this run. Write confidence intervals overlap at both sizes. See [Experiment 05](experiments/05-bytebuffer.md) for full results and limitations.
-
----
-
-## 6. Text vs Binary Message Decoding
-
-**Status:** 🟡 Measured; hardware metadata and repeatability pending.
-
-### Question
-
-What is the cost of decoding a text-based market message compared with decoding a fixed binary representation?
-
-Example logical message:
-
-```text
-orderId = 10001
-priceTicks = 185025
-quantity = 100
-side = BUY
-```
-
-Both decoders return the same immutable Message record. Text uses String.split and Long.parseLong; binary uses fixed-offset BIG_ENDIAN reads from prepared 25-byte buffers. Encoding and input creation happen outside measurement. See [Experiment 06](experiments/06-message-decoding.md) for the format, hypothesis and run command.
-
-### Text Representation
-
-Example:
-
-```text
-10001,185025,100,BUY
-```
-
-### Binary Representation
-
-A compact fixed-layout representation will encode the same fields directly as binary values.
-
-### Areas of Interest
-
-The experiment will investigate:
-
-- parsing overhead,
-- allocation,
-- throughput,
-- latency,
-- message size.
-
-### Results
-
-Heap reads took about 3.6x less time than direct reads in this run. Write confidence intervals overlap. See [Experiment 05](experiments/05-bytebuffer.md) for measurements and limitations.
-
----
-
-## 7. Queue vs SPSC Ring Buffer
-
-**Status:** 🟡 Tested and measured; hardware metadata and repeatability pending. See [Experiment 07](experiments/07-spsc-ring-buffer.md). Successful transfer counters are aggregate counts, while primary throughput counts attempts.
-
-### Question
-
-How does a conventional queue compare with a fixed-size Single Producer / Single Consumer ring buffer?
-
-### Scenario
-
-```text
-Producer
-   |
-   v
-+--------------------+
-| Queue / RingBuffer |
-+--------------------+
-   |
-   v
-Consumer
-```
-
-The experiment represents a simplified message-passing pipeline.
-
-### Ring Buffer Requirements
-
-Before benchmarking, the implementation must correctly handle:
-
-- producer/consumer ordering,
-- wrap-around,
-- full buffer state,
-- empty buffer state,
-- visibility between threads.
-
-Correctness will be tested before performance measurements are collected.
-
-### Areas of Interest
-
-- throughput,
-- allocation,
-- synchronization overhead,
-- predictable memory usage,
-- latency.
-
-### Results
-
-Recorded in [Experiment 06](experiments/06-message-decoding.md): approximately 3.6–3.8 ns/message and 40 B/message for binary versus 79–81 ns/message and 320 B/message for the chosen text parser. Prepared inputs exclude encoding and I/O.
-
----
-
-# Dummy Market Data
-
-The repository contains a small synthetic market-data dataset:
-
-```text
-data/sample-market-messages.csv
-```
-
-Example structure:
-
-```text
-message_id,order_id,price_ticks,quantity,side
-1,10001,10000,10,BUY
-...
-```
-
-The small dataset exists primarily to make the examples understandable.
-
-Larger deterministic datasets will be generated for benchmarks where required.
-
-Input generation should normally happen outside the measured benchmark method.
-
----
-
-# Project Structure
-
-```text
-java-low-latency-lab/
-│
-├── README.md
-├── pom.xml
-├── DUMMY_DATA.md
-├── EXPERIMENT_TEMPLATE.md
-├── PROJECT_NOTES.md
-│
-├── data/
-│   └── sample-market-messages.csv
-│
-└── src/
-    ├── main/
-    │   └── java/
-    │       └── sk/
-    │           └── michal/
-    │               └── latency/
-    │                   ├── BenchmarkData.java
-    │                   ├── PrimitiveVsBoxedBenchmark.java
-    │                   └── LookupBenchmark.java
-```
-
-Recorded measurements are already stored in `results/`. An `experiments/` directory is planned for individual experiment write-ups.
-
----
-
-# Building the Project
-
-## Requirements
-
-- JDK 21 (the version used for the initial baseline).
-- Maven 3, or the Maven bundled with IntelliJ IDEA.
-- JMH 1.37 is declared in `pom.xml` and resolved by Maven.
-
-Clone the repository:
+Requirements: JDK 21 and Maven 3. IntelliJ's bundled Maven also works.
 
 ```bash
 git clone https://github.com/michval1/java-low-latency-lab.git
 cd java-low-latency-lab
-```
-
-Build from the repository root:
-
-```bash
 mvn clean package
 ```
 
-In IntelliJ IDEA, select the project JDK for Maven and execute `clean package` through the Maven tool window. A separate system Maven installation is not required for this workflow.
+In IntelliJ, select JDK 21 for the project and Maven runner, then execute `clean package` in the Maven tool window. This runs the tests and creates `target/benchmarks.jar` with its dependencies.
 
-Maven Shade produces `target/benchmarks.jar` with dependencies and `org.openjdk.jmh.Main` as its entry point. A custom application Main class is not required.
+## Run
 
----
-
-# Running Benchmarks
-
-Run all implemented benchmarks:
+Run one experiment from the repository root:
 
 ```bash
-java -jar target/benchmarks.jar
+java -jar target/benchmarks.jar PrimitiveVsBoxedBenchmark -prof gc -rf json -rff results/primitive-vs-boxed-arrays.json
 ```
 
-Run one benchmark class:
+Replace the class name and output filename for another experiment. Use a new filename to retain an earlier run. To run everything, omit the class-name filter. Individual runs take several minutes.
 
-```bash
-java -jar target/benchmarks.jar PrimitiveVsBoxedBenchmark
-```
-
-If Java is not on PATH, invoke the JDK executable directly. In PowerShell:
+If Java is not on PATH, PowerShell can invoke the JDK directly:
 
 ```powershell
-& "<JDK_HOME>\bin\java.exe" -jar ".\target\benchmarks.jar" PrimitiveVsBoxedBenchmark
+& "<JDK_HOME>\bin\java.exe" -jar ".\target\benchmarks.jar" PrimitiveVsBoxedBenchmark -prof gc -rf json -rff results/primitive-vs-boxed-arrays.json
 ```
 
-Replace `<JDK_HOME>` with your JDK installation directory. Commands are run from the repository root. The current primitive/boxed configuration takes about five minutes plus startup and profiling overhead; actual duration depends on the machine.
+Replace `<JDK_HOME>` with the JDK directory on your machine. The exact commands for each experiment are in its write-up.
 
-For future runs, save structured JMH results:
+## Results
 
-```bash
-java -jar target/benchmarks.jar PrimitiveVsBoxedBenchmark -rf json -rff results/primitive-vs-boxed.json
+[RESULTS_SUMMARY.md](RESULTS_SUMMARY.md) compares the findings and links to the full methods. JMH JSON files are in `results/`. The original fixed-addition baseline is retained separately from the later array-sum experiment.
+
+A few observations from the recorded runs:
+
+- Boxed array summation became more expensive relative to primitive storage as the dataset grew.
+- Reusing a message reduced measured allocation from about 40 B/message to near zero in the chosen single-threaded path.
+- Heap buffer reads had lower time than direct reads; write intervals overlapped.
+- The fixed binary decoder allocated less than the split/parse text implementation.
+- The SPSC ring recorded more successful polls than ArrayBlockingQueue under the same measurement schedule.
+
+These observations apply to the specific workloads. No experiment measures production p99 latency. Queue primary throughput includes failed attempts; successful poll counters are aggregate counts. Lookup time is normalized per lookup, whereas summation and buffer time describe complete traversals.
+
+## Measurement choices
+
+Inputs are deterministic and prepared outside measurement. Experiments use three JVM forks with warmup and measurement iterations. The GC profiler records measured allocation; it does not report retained input memory or the size of native buffers.
+
+The write-ups document the exceptions: per-message allocation is measured in Experiment 04, text-parser temporaries are measured in Experiment 06, and both queue threads run concurrently in Experiment 07. The custom ring supports exactly one producer and one consumer.
+
+Hardware and runtime details are in [BENCHMARK_ENVIRONMENT.md](BENCHMARK_ENVIRONMENT.md). Exact Windows/Maven versions, power settings and background load were not recorded.
+
+Before committing new JSON results:
+
+```powershell
+.\scripts\Sanitize-JmhResults.ps1
+git diff --check
 ```
 
-Ensure the `results/` directory exists first. Inspect console output before committing logs and replace any personal absolute paths with placeholders.
+The script replaces the JVM executable path with a placeholder and flags other absolute paths. Inspect additional logs separately.
 
-The earlier Maven `exec:java` invocation failed to locate `org.openjdk.jmh.runner.ForkedMain` in the forked JVM. Use the standalone JAR workflow above. A Maven `BUILD SUCCESS` message alone does not establish that measurement succeeded: verify completed measurement iterations and a populated result table.
-
----
-
-# Results
-
-Both the original fixed-value baseline and the expanded array-sum experiment have been recorded. The expanded run measured all three sizes with three forks and GC profiling. See [Experiment 01](experiments/01-primitive-vs-boxed.md) for results and limitations.
-
-Measurement excerpts are stored in `results/primitive-vs-boxed-baseline.txt`. The initial environment is partially documented; CPU, RAM, exact OS version and Maven version still need to be recorded. The expanded results are stored in `results/primitive-vs-boxed-arrays.json`. Independent repeatability checks remain planned.
-
-Completed experiments should include reviewed implementations, equivalent work, documented configuration and environment, reproducible measurements, and an explanation of limitations.
-
----
-# Experiment Documentation
-
-Each completed experiment should document:
-
-### 1. Question
-
-What exactly is being measured?
-
-### 2. Hypothesis
-
-What behaviour is expected before running the benchmark?
-
-### 3. Implementation
-
-How are the compared approaches implemented?
-
-### 4. Benchmark Configuration
-
-Including:
+## Repository layout
 
 ```text
-Warmup iterations
-Measurement iterations
-Fork count
-Benchmark mode
-Time unit
-JVM arguments
+src/main/java/sk/michal/latency/   benchmark and implementation classes
+src/test/java/sk/michal/latency/   correctness and concurrent-transfer tests
+experiments/                     questions, methods, results and limitations
+results/                         JMH JSON and the original baseline
+scripts/                         result sanitization
+data/                           small synthetic market-message fixture
 ```
 
-### 5. Environment
+The CSV fixture and BenchmarkData class provide small examples; performance experiments generate their own larger inputs. See [DUMMY_DATA.md](DUMMY_DATA.md).
 
-Including:
+[PROJECT_NOTES.md](PROJECT_NOTES.md) records implementation choices and remaining work. [EXPERIMENT_TEMPLATE.md](EXPERIMENT_TEMPLATE.md) is the starting point for another experiment.
 
-```text
-CPU
-RAM
-Operating system
-JDK
-JVM
-```
+## Next work
 
-### 6. Results
-
-Raw JMH results and a summarized comparison.
-
-### 7. Interpretation
-
-Why might the observed difference exist?
-
-### 8. Limitations
-
-What does the benchmark **not** prove?
-
-This is important because microbenchmark results should not automatically be generalized to complete production systems.
-
----
-
-# Planned Repository Layout
-
-As experiments are completed, the repository will evolve toward:
-
-```text
-java-low-latency-lab/
-│
-├── README.md
-├── pom.xml
-│
-├── data/
-│
-├── experiments/
-│   ├── 01-primitive-vs-boxed.md
-│   ├── 02-array-vs-arraylist.md
-│   ├── 03-array-vs-hashmap.md
-│   ├── 04-allocation-vs-reuse.md
-│   ├── 05-bytebuffer.md
-│   ├── 06-message-decoding.md
-│   └── 07-spsc-ring-buffer.md
-│
-├── results/
-│   └── ...
-│
-└── src/
-    ├── main/
-    │   └── java/
-    └── test/
-        └── java/
-```
-
----
-
-# Goals
-
-By the end of the project, the repository should demonstrate practical understanding of:
-
-- Java performance measurement,
-- JMH,
-- JVM warmup and JIT compilation,
-- primitive vs boxed data,
-- object allocation,
-- garbage-collection pressure,
-- Java collections,
-- memory access patterns,
-- `ByteBuffer`,
-- binary data representation,
-- concurrency,
-- SPSC communication,
-- benchmark design,
-- performance-result interpretation.
-
-The broader goal is to understand the trade-offs involved in designing **predictable, allocation-conscious, low-latency Java systems**.
-
----
-
-# Key Findings
-
-This section will be updated as experiments are completed.
-
-The standalone JAR successfully runs JMH with forked JVMs. The initial primitive/boxed baseline is recorded above, together with its limitations. No general performance conclusions or allocation findings have been established.
-
----
-
-# Limitations
-
-Microbenchmarks measure isolated operations under controlled conditions.
-
-Results from this project should therefore not be interpreted as universal rules such as:
-
-> "Arrays are always faster than collections."
-
-or:
-
-> "Object allocation should always be avoided."
-
-Real-world performance depends on:
-
-- workload,
-- JVM implementation,
-- hardware,
-- dataset size,
-- access patterns,
-- concurrency,
-- garbage collector,
-- application architecture.
-
-The purpose of these experiments is to understand specific trade-offs under documented conditions.
-
----
-
-# Roadmap
-
-- [x] Verify Java 21 and IntelliJ Maven build
-- [x] Verify standalone JAR execution with JVM forks
-- [x] Improve primitive vs boxed benchmark
-- [x] Measure primitive vs boxed allocation during array summation
-- [x] Implement, test and measure indexed array vs `ArrayList` traversal
-- [x] Improve, test and measure array vs `HashMap` lookup
-- [x] Implement, test and measure allocation vs reuse
-- [x] Implement, test and measure heap vs direct `ByteBuffer`
-- [x] Implement and measure text vs binary decoding
-- [x] Implement, test and measure SPSC ring buffer
-- [ ] Record benchmark environment
-- [x] Store initial baseline measurement excerpts
-- [ ] Preserve structured results and sanitized full logs for future runs
-- [ ] Document findings for each experiment
-- [ ] Add correctness tests
-- [ ] Complete final benchmark comparison
-
----
-
-## Current State
-
-The repository currently provides the initial JMH benchmark structure, synthetic market data, experiment documentation templates, and the first benchmark implementations.
-
-The standalone benchmark runner has been verified and an initial primitive/boxed baseline is recorded. The expanded primitive/boxed experiment has passing correctness tests and GC-profiled results. Hardware metadata and independent repeatability checks remain outstanding; the remaining experiments are planned.
+- Repeat the largest array/ArrayList case in a separate run and compare uncertainty.
+- Record exact OS/Maven versions and machine conditions for future runs.
+- Profile selected results to investigate causes rather than attributing them to cache or JIT behavior from timing alone.
+- Extend queue validation with longer stress runs before considering production use.
